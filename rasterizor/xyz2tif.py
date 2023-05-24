@@ -25,16 +25,16 @@ from rasterio import transform as riotrans
 CRS = 'EPSG:2223'
 
 
-def load_xyz(fn: str) -> pd.DataFrame:
+def load_xyz(fn: pd.DataFrame):
     """
-    Loads a xyz data table from disk
+    Loads a xyz datFrame from disk
 
     Parameters
     ----------
-    fn : str
-        File name
-    """
-    return pd.read_table(fn, names='g x y z'.split(), sep=r'\s+', index_col=False)
+    fn : pd.DataFrame
+           """
+    
+    return fn
 
 
 def check_coords(xyz: pd.DataFrame):
@@ -44,7 +44,7 @@ def check_coords(xyz: pd.DataFrame):
     print(f'Distinct values: {x_count} x, {y_count} y and {z_count} z values')
 
 
-def xyz2matrix(xyz: pd.DataFrame) -> (np.ndarray, float, float, float, float):
+def xyz2matrix(xyz: pd.DataFrame):
     """
     Converts the xyz dataframe to a 2d numpy array with origin and bounding box
     """

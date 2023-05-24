@@ -22,6 +22,9 @@
  ***************************************************************************/
 """
 import os
+import pandas as pd
+import numpy as np
+from numpy import savetxt
 from qgis.core import (
     Qgis,
     QgsMessageLog,
@@ -38,7 +41,9 @@ from qgis.PyQt.QtWidgets import (
     QDialog,
     QGridLayout,
     QDialogButtonBox,
+    QMessageBox
 )
+# from rast_functions import outTable
 
 # Initialize Qt resources from file resources.py
 from . import xyz2tif
@@ -46,10 +51,14 @@ from .resources import *
 # Import the code for the dialog
 from .rasterizor_dialog import RasterizorDialog
 import os.path
-
+from qgis import processing
+from rasterio import transform as riotrans
+import rasterio as rio
 
 class Rasterizor:
     """QGIS Plugin Implementation."""
+
+    
 
     def __init__(self, iface):
         """Constructor.
@@ -59,6 +68,9 @@ class Rasterizor:
             application at run time.
         :type iface: QgsInterface
         """
+        
+        
+        self.dlg = RasterizorDialog()
         # Save reference to the QGIS interface
         self.iface = iface
         # initialize plugin directory
@@ -82,6 +94,16 @@ class Rasterizor:
         # Check if plugin was started the first time in current QGIS session
         # Must be set in initGui() to survive plugin reloads
         self.first_start = None
+        
+        # Set the CRS to the widget
+        self.crs = QgsCoordinateReferenceSystem("EPSG:4326")
+        self.dlg.crsselector.setCrs(self.crs)
+        
+        # Run button
+        self.dlg.runButton.clicked.connect(self.run)
+        
+        # Close button
+        self.dlg.cancelButton.clicked.connect(self.closeDialog)     
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
@@ -175,12 +197,11 @@ class Rasterizor:
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
-
         icon_path = ':/plugins/rasterizor/icon.png'
         self.add_action(
             icon_path,
             text=self.tr(u'FLO-2D Rasterizor'),
-            callback=self.run,
+            callback=self.open,
             parent=self.iface.mainWindow())
 
         # will be set False in run()
@@ -194,28 +215,102 @@ class Rasterizor:
                 self.tr(u'&FLO-2D Rasterizor'),
                 action)
             self.iface.removeToolBarIcon(action)
+            
+    # Closing the dialog
+    def closeDialog(self):
+        self.dlg.close()
 
-
-    def run(self):
-        """Run method that performs all the real work"""
-
-        # Create the dialog with elements (after translation) and keep reference
-        # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        if self.first_start == True:
-            self.first_start = False
-            self.dlg = RasterizorDialog()
-
-        # show the dialog
+    # Opening the dialog
+    def open(self):
         self.dlg.show()
-        # Run the dialog event loop
-        result = self.dlg.exec_()
-        # See if OK was pressed
-        if result:
-            """Load FLO-2D *.OUT file into xyz2tif python script.  Run the script and add the raster to the map."""
+        
+    def xyz2matrix(self, xyz: pd.DataFrame):
+        """
+        Converts the xyz dataframe to a 2d numpy array with origin and bounding box
+        """
+        mat = xyz.pivot_table(index='y', columns='x', values='z')
+        mat.sort_index(axis='index', ascending=False, inplace=True)
+        mat.sort_index(axis='columns', ascending=True, inplace=True)
+        # Get origin (upper left corner)
+        cellsize_x = mat.columns[1] - mat.columns[0]
+        self.dlg.plainTextEdit.appendPlainText("Cell size x: " + str(cellsize_x))
+        cellsize_y = mat.index[0] - mat.index[1]
+        self.dlg.plainTextEdit.appendPlainText("Cell size y: " + str(cellsize_y))
+        south = mat.index.min() - cellsize_y / 2
+        north = mat.index.max() + cellsize_y / 2
+        west = mat.columns.min() - cellsize_x / 2
+        east = mat.columns.max() + cellsize_x / 2
+
+        arr = np.asarray(mat, dtype=np.float32)
+
+        return arr, west, south, east, north
+    
+    def matrix2raster(self, fn_out: str, arr: np.ndarray, west: float, south: float, east: float, north: float):
+            
+        transform = riotrans.from_bounds(
+            west=west, south=south,
+            east=east, north=north,
+            width=arr.shape[1],
+            height=arr.shape[0]
+        )
+            
+            
+        with rio.open(
+                fn_out, 'w',
+                driver='GTiff',
+                height=arr.shape[0], width=arr.shape[1],
+                count=1, dtype=str(arr.dtype),
+                crs=self.dlg.crsselector.crs().authid(), transform=transform, compress='lzw'
+        ) as raster:
+            
+            raster.write(arr, 1)
+    
+        
+    def process(self, fn_in, fn_out):
+        xyz = fn_in
+        self.dlg.plainTextEdit.appendPlainText("Processing data...")
+        arr, west, south, east, north = self.xyz2matrix(xyz)
+        # adjusted here
+        self.dlg.plainTextEdit.appendPlainText("Rasterizing data...")
+        fn_out = fn_out + "\output.tif"
+        self.matrix2raster(fn_out, arr, west, south, east, north)
+        return fn_out
+                    
+    def run(self):
+
+        # # Create the dialog with elements (after translation) and keep reference
+        # # Only create GUI ONCE in callback, so that it will only load when the plugin is started
+        # if self.first_start == True:
+        #     self.first_start = False
+        #     self.dlg = RasterizorDialog()
+
+        filePath = self.dlg.readfile.filePath()
+        # crs = os.path.basename(filePath)[:-4][-4:]
+        # self.dlg.plainTextEdit.appendPlainText(crs)
+        # self.dlg.crsselector.setCrs(crs)
+        outputPath = self.dlg.outputFile.filePath()
+        if filePath == "" or outputPath =="":
+            QMessageBox.information(None, "Error", "Please, select a file and/or output directory!") 
+        else:
+            
+            # """Load FLO-2D *.OUT file into xyz2tif python script.  Run the script and add the raster to the map."""
+            
             f = self.dlg.readfile.filePath()
             fn = f.replace(os.sep, '/')
-            iface.messageBar().pushMessage("This is the corrected file path.", fn, level=Qgis.Info, duration=5)
-            epsg = self.dlg.crsselector.crs().authid()
-            iface.messageBar().pushMessage("Your coordinate system is", epsg, level=Qgis.Info)
-
-            xyz2tif.load_xyz(fn)
+            #iface.messageBar().pushMessage("This is the corrected file path.", fn, level=Qgis.Info, duration=5)
+            self.dlg.plainTextEdit.appendPlainText("Reading data...")
+            table = pd.read_table(fn, names='g x y z'.split(), sep=r'\s+', index_col=0)
+            # table = table.to_csv(index=None)
+            # self.dlg.plainTextEdit.appendPlainText(table)
+            
+            # epsg = self.dlg.crsselector.crs().authid()
+            #iface.messageBar().pushMessage("File", fn, level=Qgis.Info)
+            #processing.run("native:rasterize", )
+             
+            raster_file = self.process(table, outputPath)
+            self.dlg.plainTextEdit.appendPlainText("Processing complete!")
+            
+            # Add the output file to the map canvas
+            self.iface.addRasterLayer(raster_file,"FLO-2D-Rasterizor")
+                      
+            
