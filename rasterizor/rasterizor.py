@@ -22,13 +22,16 @@
  ***************************************************************************/
 """
 import os
+import shutil
 import pandas as pd
 import numpy as np
+import time
 from numpy import savetxt
 from qgis.core import (
     Qgis,
     QgsMessageLog,
     QgsCoordinateReferenceSystem,
+    QgsProject
 )
 from qgis.utils import iface
 from qgis.PyQt.QtCore import QSettings, QTranslator, QCoreApplication
@@ -54,6 +57,8 @@ import os.path
 from qgis import processing
 from rasterio import transform as riotrans
 import rasterio as rio
+from rasterio.merge import merge as rmerge
+from rasterio.transform import from_origin
 
 class Rasterizor:
     """QGIS Plugin Implementation."""
@@ -223,94 +228,94 @@ class Rasterizor:
     # Opening the dialog
     def open(self):
         self.dlg.show()
+            
+    # Adapted function from dlg_sampling_xyz_.py
+    def lidar_to_raster(self, lidar_file, raster_file, cell_size, nodata_value=-9999):
         
-    def xyz2matrix(self, xyz: pd.DataFrame):
-        """
-        Converts the xyz dataframe to a 2d numpy array with origin and bounding box
-        """
-        mat = xyz.pivot_table(index='y', columns='x', values='z')
-        mat.sort_index(axis='index', ascending=False, inplace=True)
-        mat.sort_index(axis='columns', ascending=True, inplace=True)
-        # Get origin (upper left corner)
-        cellsize_x = mat.columns[1] - mat.columns[0]
-        self.dlg.plainTextEdit.appendPlainText("Cell size x: " + str(cellsize_x))
-        cellsize_y = mat.index[0] - mat.index[1]
-        self.dlg.plainTextEdit.appendPlainText("Cell size y: " + str(cellsize_y))
-        south = mat.index.min() - cellsize_y / 2
-        north = mat.index.max() + cellsize_y / 2
-        west = mat.columns.min() - cellsize_x / 2
-        east = mat.columns.max() + cellsize_x / 2
+        # Open the file and read the lines
+        self.dlg.plainTextEdit.appendPlainText("Reading data...")
+        with open(lidar_file, "r") as f:
+            lines = f.readlines()
 
-        arr = np.asarray(mat, dtype=np.float32)
+        x_coords = []
+        y_coords = []
+        z_values = []
 
-        return arr, west, south, east, north
-    
-    def matrix2raster(self, fn_out: str, arr: np.ndarray, west: float, south: float, east: float, north: float):
-            
-        transform = riotrans.from_bounds(
-            west=west, south=south,
-            east=east, north=north,
-            width=arr.shape[1],
-            height=arr.shape[0]
-        )
-            
-            
+        # Get the coordinates
+        self.dlg.plainTextEdit.appendPlainText("Getting coordinates...")
+        for line in lines:
+            line = line.strip()
+            if line:
+                _, x, y, z = line.split()
+                x_coords.append(float(x))
+                y_coords.append(float(y))
+                z_values.append(float(z))
+
+        min_x = min(x_coords)
+        max_y = max(y_coords)
+        num_cols = int((max(x_coords) - min_x) / cell_size) + 1
+        num_rows = int((max(y_coords) - min(y_coords)) / cell_size) + 1
+        
+        transform = from_origin(min_x - cell_size / 2, max_y + cell_size / 2, cell_size, cell_size)
+
+        raster_data = np.full((num_rows, num_cols), nodata_value, dtype=np.float32)
+
+        for x, y, z in zip(x_coords, y_coords, z_values):
+            col = int((x - min_x) / cell_size )
+            row = int((max_y - y) / cell_size )
+            raster_data[row, col] = z
+
+
+        self.dlg.plainTextEdit.appendPlainText("Creating raster...")
         with rio.open(
-                fn_out, 'w',
-                driver='GTiff',
-                height=arr.shape[0], width=arr.shape[1],
-                count=1, dtype=str(arr.dtype),
-                crs=self.dlg.crsselector.crs().authid(), transform=transform, compress='lzw'
-        ) as raster:
-            
-            raster.write(arr, 1)
-    
-        
-    def process(self, fn_in, fn_out):
-        xyz = fn_in
-        self.dlg.plainTextEdit.appendPlainText("Processing data...")
-        arr, west, south, east, north = self.xyz2matrix(xyz)
-        # adjusted here
-        self.dlg.plainTextEdit.appendPlainText("Rasterizing data...")
-        fn_out = fn_out + "\output.tif"
-        self.matrix2raster(fn_out, arr, west, south, east, north)
-        return fn_out
-                    
+            raster_file,
+            "w",
+            driver="GTiff",
+            height=num_rows,
+            width=num_cols,
+            count=1,
+            dtype=raster_data.dtype,
+            nodata=nodata_value,
+            crs=self.dlg.crsselector.crs().authid(),
+            transform=transform,
+            compress='lzw'
+        ) as dst:
+            dst.write(raster_data, 1)
+                        
     def run(self):
 
         # # Create the dialog with elements (after translation) and keep reference
         # # Only create GUI ONCE in callback, so that it will only load when the plugin is started
-        # if self.first_start == True:
-        #     self.first_start = False
-        #     self.dlg = RasterizorDialog()
 
+        # file path
         filePath = self.dlg.readfile.filePath()
-        # crs = os.path.basename(filePath)[:-4][-4:]
-        # self.dlg.plainTextEdit.appendPlainText(crs)
-        # self.dlg.crsselector.setCrs(crs)
+        # output directory
         outputPath = self.dlg.outputFile.filePath()
-        if filePath == "" or outputPath =="":
-            QMessageBox.information(None, "Error", "Please, select a file and/or output directory!") 
+        # cell size (allowing only float number)
+        cellSize = self.dlg.cellSize.text()
+        try:
+            cellSize = float(cellSize)
+        except Exception:
+            QMessageBox.information(None, 'Error','Cell size can only be a number')
+            return
+        
+        if filePath == "" or outputPath =="" or cellSize =="":
+            QMessageBox.information(None, "Error", "Please, select a file, output directory and/or cell size!") 
         else:
             
-            # """Load FLO-2D *.OUT file into xyz2tif python script.  Run the script and add the raster to the map."""
-            
-            f = self.dlg.readfile.filePath()
-            fn = f.replace(os.sep, '/')
-            #iface.messageBar().pushMessage("This is the corrected file path.", fn, level=Qgis.Info, duration=5)
-            self.dlg.plainTextEdit.appendPlainText("Reading data...")
-            table = pd.read_table(fn, names='g x y z'.split(), sep=r'\s+', index_col=0)
-            # table = table.to_csv(index=None)
-            # self.dlg.plainTextEdit.appendPlainText(table)
-            
-            # epsg = self.dlg.crsselector.crs().authid()
-            #iface.messageBar().pushMessage("File", fn, level=Qgis.Info)
-            #processing.run("native:rasterize", )
-             
-            raster_file = self.process(table, outputPath)
-            self.dlg.plainTextEdit.appendPlainText("Processing complete!")
-            
-            # Add the output file to the map canvas
+            # Read the file and adjust the slashes
+            fn = filePath.replace(os.sep, '/')
+            # create the output file
+            raster_file = outputPath + "\output.tif"
+            # Verify if the layer exists, if so delete it
+            for layer in QgsProject.instance().mapLayers().values():
+                if layer.name()=="FLO-2D-Rasterizor":
+                     QgsProject.instance().removeMapLayers( [layer.id()] )     
+            # Run the function
+            self.lidar_to_raster(fn, raster_file, cellSize)
+            # Add to map
+
             self.iface.addRasterLayer(raster_file,"FLO-2D-Rasterizor")
-                      
+            self.dlg.plainTextEdit.appendPlainText("Process complete!")
+                                
             
