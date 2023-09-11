@@ -6,54 +6,37 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>393</width>
-    <height>405</height>
+    <width>394</width>
+    <height>468</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>FLO-2D Rasterizor</string>
   </property>
-  <widget class="QgsFileWidget" name="readfile">
-   <property name="geometry">
-    <rect>
-     <x>80</x>
-     <y>10</y>
-     <width>301</width>
-     <height>27</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>Load a *.out file with ge, x, y, var data.</string>
-   </property>
-  </widget>
-  <widget class="QgsProjectionSelectionWidget" name="crsselector">
-   <property name="geometry">
-    <rect>
-     <x>80</x>
-     <y>50</y>
-     <width>151</width>
-     <height>27</height>
-    </rect>
-   </property>
-  </widget>
   <widget class="QPlainTextEdit" name="plainTextEdit">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>250</y>
+     <y>320</y>
      <width>371</width>
      <height>131</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Progress messages.</string>
    </property>
   </widget>
   <widget class="QPushButton" name="runButton">
    <property name="geometry">
     <rect>
-     <x>180</x>
-     <y>150</y>
+     <x>182</x>
+     <y>229</y>
      <width>93</width>
      <height>28</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>Create a raster.</string>
    </property>
    <property name="text">
     <string>Run</string>
@@ -62,8 +45,8 @@
   <widget class="QPushButton" name="cancelButton">
    <property name="geometry">
     <rect>
-     <x>280</x>
-     <y>150</y>
+     <x>282</x>
+     <y>229</y>
      <width>93</width>
      <height>28</height>
     </rect>
@@ -72,24 +55,11 @@
     <string>Cancel</string>
    </property>
   </widget>
-  <widget class="QLabel" name="inputLabel">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>10</y>
-     <width>55</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Input file:</string>
-   </property>
-  </widget>
   <widget class="Line" name="line">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>90</y>
+     <x>12</x>
+     <y>73</y>
      <width>371</width>
      <height>16</height>
     </rect>
@@ -98,40 +68,11 @@
     <enum>Qt::Horizontal</enum>
    </property>
   </widget>
-  <widget class="QLabel" name="outputDirectory">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>111</y>
-     <width>101</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Output directory:</string>
-   </property>
-  </widget>
-  <widget class="QgsFileWidget" name="outputFile">
-   <property name="geometry">
-    <rect>
-     <x>110</x>
-     <y>110</y>
-     <width>271</width>
-     <height>27</height>
-    </rect>
-   </property>
-   <property name="toolTip">
-    <string>Select a directory to save the file</string>
-   </property>
-   <property name="storageMode">
-    <enum>QgsFileWidget::GetDirectory</enum>
-   </property>
-  </widget>
   <widget class="Line" name="line_2">
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>190</y>
+     <y>272</y>
      <width>371</width>
      <height>16</height>
     </rect>
@@ -144,7 +85,7 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>220</y>
+     <y>290</y>
      <width>71</width>
      <height>20</height>
     </rect>
@@ -153,44 +94,140 @@
     <string>Console:</string>
    </property>
   </widget>
-  <widget class="QLabel" name="projectionLabel">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>50</y>
-     <width>71</width>
-     <height>20</height>
+     <x>12</x>
+     <y>10</y>
+     <width>361</width>
+     <height>62</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Projection:</string>
-   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="sizeConstraint">
+     <enum>QLayout::SetDefaultConstraint</enum>
+    </property>
+    <property name="spacing">
+     <number>10</number>
+    </property>
+    <item row="0" column="0">
+     <widget class="QLabel" name="inputLabel">
+      <property name="text">
+       <string>Input file:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" colspan="3">
+     <widget class="QgsFileWidget" name="readfile">
+      <property name="toolTip">
+       <string>Load a *.out file with ge, x, y, var data.</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="projectionLabel">
+      <property name="text">
+       <string>Projection:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QgsProjectionSelectionWidget" name="crsselector">
+      <property name="toolTip">
+       <string>Select the project coordinate system.</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="2">
+     <widget class="QLabel" name="cellSizeLabel">
+      <property name="toolTip">
+       <string>Set the grid element size.</string>
+      </property>
+      <property name="text">
+       <string>Cell Size:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="3">
+     <widget class="QLineEdit" name="cellSize">
+      <property name="toolTip">
+       <string>Set the grid element size.</string>
+      </property>
+      <property name="inputMethodHints">
+       <set>Qt::ImhNone</set>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
-  <widget class="QLabel" name="cellSizeLabel">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
-     <x>240</x>
-     <y>50</y>
-     <width>71</width>
-     <height>20</height>
+     <x>12</x>
+     <y>100</y>
+     <width>361</width>
+     <height>118</height>
     </rect>
    </property>
-   <property name="text">
-    <string>Cell Size:</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="cellSize">
-   <property name="geometry">
-    <rect>
-     <x>300</x>
-     <y>50</y>
-     <width>81</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="inputMethodHints">
-    <set>Qt::ImhNone</set>
-   </property>
+   <layout class="QGridLayout" name="gridLayout_2">
+    <property name="spacing">
+     <number>10</number>
+    </property>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label">
+      <property name="toolTip">
+       <string>Layer name.</string>
+      </property>
+      <property name="text">
+       <string>Layer Name:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="1" colspan="2">
+     <widget class="QLineEdit" name="lineEdit_layerName">
+      <property name="toolTip">
+       <string>Name the layer if different from filename.</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="outputDirectory">
+      <property name="toolTip">
+       <string>Location of the output raster file.</string>
+      </property>
+      <property name="text">
+       <string>Output directory:</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1" colspan="2">
+     <widget class="QgsFileWidget" name="outputFile">
+      <property name="toolTip">
+       <string>Select a directory to save the file.</string>
+      </property>
+      <property name="storageMode">
+       <enum>QgsFileWidget::GetDirectory</enum>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="label_2">
+      <property name="toolTip">
+       <string>Select a map style.</string>
+      </property>
+      <property name="text">
+       <string>Select a Style</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1" colspan="2">
+     <widget class="QComboBox" name="style_cbo">
+      <property name="toolTip">
+       <string>Select a map style.</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
   </widget>
  </widget>
  <customwidgets>
