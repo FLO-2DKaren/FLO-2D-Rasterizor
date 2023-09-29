@@ -215,7 +215,7 @@ class Rasterizor:
         self.dlg.show()
 
     # Adapted function from dlg_sampling_xyz_.py
-    def lidar_to_raster(self, lidar_file, raster_file, cell_size, nodata_value=-9999):
+    def lidar_to_raster(self, lidar_file, raster_file, nodata_value=-9999):
 
         # Open the file and read the lines
         self.dlg.plainTextEdit.appendPlainText("Reading data...")
@@ -235,6 +235,15 @@ class Rasterizor:
                 x_coords.append(float(x))
                 y_coords.append(float(y))
                 z_values.append(float(z))
+
+        # Calculate the differences in X and Y coordinates
+        dx = x_coords[1] - x_coords[0]
+        dy = y_coords[1] - y_coords[0]
+
+        if dx != 0:
+            cell_size = int(abs(dx))
+        if dy != 0:
+            cell_size = int(abs(dy))
 
         min_x = min(x_coords)
         max_y = max(y_coords)
@@ -267,8 +276,7 @@ class Rasterizor:
             dst.write(raster_data, 1)
 
     def setStyle(self, layer, style):
-
-
+        """Function to set the styles"""
 
         provider = layer.dataProvider()
         extent = layer.extent()
@@ -353,15 +361,15 @@ class Rasterizor:
         filePath = self.dlg.readfile.filePath()
         # output directory
         outputPath = self.dlg.outputFile.filePath()
-        # cell size (allowing only float number)
-        cellSize = self.dlg.cellSize.text()
-        try:
-            cellSize = int(cellSize)
-        except Exception:
-            QMessageBox.information(None, 'Error', 'Cell size can only be a number')
-            return
+        # # cell size (allowing only float number)
+        # cellSize = self.dlg.cellSize.text()
+        # try:
+        #     cellSize = int(cellSize)
+        # except Exception:
+        #     QMessageBox.information(None, 'Error', 'Cell size can only be a number')
+        #     return
 
-        if filePath == "" or outputPath == "" or cellSize == "":
+        if filePath == "" or outputPath == "":
             QMessageBox.information(None, "Error", "Please, select a file, output directory and/or cell size!")
 
         else:
@@ -377,7 +385,7 @@ class Rasterizor:
                 if layer.name() == self.dlg.lineEdit_layerName.text():
                     QgsProject.instance().removeMapLayers([layer.id()])
                     # Run the function
-            self.lidar_to_raster(fn, raster_file, cellSize)
+            self.lidar_to_raster(fn, raster_file)
             # Add to map
             self.iface.addRasterLayer(raster_file, layername)
             active_layer = iface.activeLayer()
