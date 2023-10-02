@@ -85,7 +85,7 @@ class Rasterizor:
         self.first_start = None
 
         # Set the CRS to the widget
-        self.crs = QgsCoordinateReferenceSystem("EPSG:4326")
+        self.crs = QgsCoordinateReferenceSystem(QgsProject.instance().crs().authid())
         self.dlg.crsselector.setCrs(self.crs)
 
         # Run button
@@ -212,6 +212,9 @@ class Rasterizor:
 
     # Opening the dialog
     def open(self):
+        """Shows the dialog"""
+        self.crs = QgsCoordinateReferenceSystem(QgsProject.instance().crs().authid())
+        self.dlg.crsselector.setCrs(self.crs)
         self.dlg.show()
 
     # Adapted function from dlg_sampling_xyz_.py
