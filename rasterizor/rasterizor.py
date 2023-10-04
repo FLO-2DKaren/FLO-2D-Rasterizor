@@ -43,8 +43,7 @@ from .resources import *
 # Import the code for the dialog
 from .rasterizor_dialog import RasterizorDialog
 import os.path
-import rasterio as rio
-from rasterio.transform import from_origin
+from osgeo import gdal
 
 class Rasterizor:
     """QGIS Plugin Implementation."""
@@ -58,6 +57,7 @@ class Rasterizor:
         :type iface: QgsInterface
         """
 
+        self.cellSize = 30
         self.dlg = RasterizorDialog()
         self.dlg.setWindowFlags(Qt.WindowStaysOnTopHint)
         # Save reference to the QGIS interface
@@ -222,61 +222,71 @@ class Rasterizor:
 
         # Open the file and read the lines
         self.dlg.plainTextEdit.appendPlainText("Reading data...")
-        with open(lidar_file, "r") as f:
-            lines = f.readlines()
 
-        x_coords = []
-        y_coords = []
-        z_values = []
+        values = []
+        cellSize_data = []
 
-        # Get the coordinates
-        self.dlg.plainTextEdit.appendPlainText("Getting coordinates...")
-        for line in lines:
-            line = line.strip()
-            if line:
-                _, x, y, z = line.split()
-                x_coords.append(float(x))
-                y_coords.append(float(y))
-                z_values.append(float(z))
+        with open(lidar_file, "r") as file:
+            for line in file:
+                line = line.strip()
+                fields = line.split()
+                if fields[0].isnumeric():
+                    cell, x, y, value = (
+                        float(fields[0]),
+                        float(fields[1]),
+                        float(fields[2]),
+                        float(fields[3]),
+                    )
+                    values.append((x, y, value))
+                    if len(cellSize_data) < 2:
+                        cellSize_data.append((x, y))
 
-        # Calculate the differences in X and Y coordinates
-        dx = x_coords[1] - x_coords[0]
-        dy = y_coords[1] - y_coords[0]
+            # Calculate the differences in X and Y coordinates
+        dx = cellSize_data[1][0] - cellSize_data[0][0]
+        dy = cellSize_data[1][1] - cellSize_data[0][1]
 
         if dx != 0:
-            cell_size = int(abs(dx))
+            self.cellSize = int(abs(dx))
         if dy != 0:
-            cell_size = int(abs(dy))
+            self.cellSize = int(abs(dy))
 
-        min_x = min(x_coords)
-        max_y = max(y_coords)
-        num_cols = int((max(x_coords) - min_x) / cell_size) + 1
-        num_rows = int((max(y_coords) - min(y_coords)) / cell_size) + 1
+        # Get the extent and number of rows and columns
+        min_x = min(point[0] for point in values)
+        max_x = max(point[0] for point in values)
+        min_y = min(point[1] for point in values)
+        max_y = max(point[1] for point in values)
+        num_cols = int((max_x - min_x) / self.cellSize) + 1
+        num_rows = int((max_y - min_y) / self.cellSize) + 1
 
-        transform = from_origin(min_x - cell_size / 2, max_y + cell_size / 2, cell_size, cell_size)
+        # Convert the list of values to an array.
+        raster_data = np.full((num_rows, num_cols), -9999, dtype=np.float32)
+        for point in values:
+            if point[2] != 0:
+                col = int((point[0] - min_x) / self.cellSize)
+                row = int((max_y - point[1]) / self.cellSize)
+                raster_data[row, col] = point[2]
 
-        raster_data = np.full((num_rows, num_cols), nodata_value, dtype=np.float32)
+        # Initialize the raster
+        driver = gdal.GetDriverByName("GTiff")
+        raster = driver.Create(raster_file, num_cols, num_rows, 1, gdal.GDT_Float32)
+        raster.SetGeoTransform(
+            (
+                min_x - self.cellSize / 2,
+                self.cellSize,
+                0,
+                max_y + self.cellSize / 2,
+                0,
+                -self.cellSize,
+            )
+        )
+        raster.SetProjection(self.crs.toWkt())
 
-        for x, y, z in zip(x_coords, y_coords, z_values):
-            col = int((x - min_x) / cell_size)
-            row = int((max_y - y) / cell_size)
-            raster_data[row, col] = z
+        band = raster.GetRasterBand(1)
+        band.SetNoDataValue(-9999)  # Set a no-data value if needed
+        band.WriteArray(raster_data)
 
-        self.dlg.plainTextEdit.appendPlainText("Creating raster...")
-        with rio.open(
-                raster_file,
-                "w",
-                driver="GTiff",
-                height=num_rows,
-                width=num_cols,
-                count=1,
-                dtype=raster_data.dtype,
-                nodata=nodata_value,
-                crs=self.dlg.crsselector.crs().authid(),
-                transform=transform,
-                compress='lzw'
-        ) as dst:
-            dst.write(raster_data, 1)
+        raster.FlushCache()
+
 
     def setStyle(self, layer, style):
         """Function to set the styles"""
@@ -364,13 +374,6 @@ class Rasterizor:
         filePath = self.dlg.readfile.filePath()
         # output directory
         outputPath = self.dlg.outputFile.filePath()
-        # # cell size (allowing only float number)
-        # cellSize = self.dlg.cellSize.text()
-        # try:
-        #     cellSize = int(cellSize)
-        # except Exception:
-        #     QMessageBox.information(None, 'Error', 'Cell size can only be a number')
-        #     return
 
         if filePath == "" or outputPath == "":
             QMessageBox.information(None, "Error", "Please, select a file, output directory and/or cell size!")
