@@ -6,7 +6,7 @@
 name=FLO-2D Rasterizor
 qgisMinimumVersion=3.0
 description=A plugin to rasterize general FLO-2D output files.
-version=0.1
+version=0.2
 author=Karen OBrien
 email=karen@flo-2d.com
 
@@ -20,7 +20,17 @@ repository=https://github.com/FLO-2DKaren/FLO-2D-Rasterizor
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-# changelog=
+changelog=
+ <p>0.2
+  - replace rasterio with GDAL
+  - auto calc pixel size
+  - auto CRS selector
+  - apply styles
+<p>0.1
+  - align to grid
+  - generic styles
+  - set pixel size and crs
+  - requires rasterio
 
 # Tags are comma separated with spaces allowed
 tags=python, rasterize, FLO-2D output, .OUT files, 
@@ -40,7 +50,7 @@ deprecated=False
 # plugin_dependencies=
 
 Category of the plugin: Raster, Vector, Database or Web
-# category=
+# category=Raster
 
 # If the plugin can run on QGIS Server.
 server=False
