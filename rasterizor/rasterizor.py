@@ -37,6 +37,7 @@ from qgis.PyQt.QtWidgets import (
     QDialogButtonBox,
     QMessageBox
 )
+from qgis._core import (QgsGradientColorRamp, QgsGradientStop)
 # from rast_functions import outTable
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -293,6 +294,7 @@ class Rasterizor:
 
         provider = layer.dataProvider()
         extent = layer.extent()
+        myRasterShader = QgsRasterShader()
 
         stats = provider.bandStatistics(1, QgsRasterBandStats.All, extent, 0)
         if stats.minimumValue <= 0.01:
@@ -318,52 +320,32 @@ class Rasterizor:
             'yellow': '#FFFF00',
         }
 
-        dep_lst = [QgsColorRampShader.ColorRampItem(valueList[0], QColor(colDic['white'])),
-                   QgsColorRampShader.ColorRampItem(valueList[1], QColor(colDic['lightblue'])),
-                   QgsColorRampShader.ColorRampItem(valueList[2], QColor(colDic['blue']))]
+        # Flood maps
+        if style == 0:
+            color_list = [QColor(colDic["white"]), QColor(colDic["lightblue"]), QColor(colDic["blue"])]
+            self.set_renderer(layer, color_list, myRasterShader, min, max)
 
-        vel_lst = [QgsColorRampShader.ColorRampItem(valueList[0], QColor(colDic['white'])),
-                   QgsColorRampShader.ColorRampItem(valueList[1], QColor(colDic['palegreen'])),
-                   QgsColorRampShader.ColorRampItem(valueList[2], QColor(colDic['green']))]
+        # Velocity maps
+        elif style == 1:
+            color_list = [QColor(colDic["white"]), QColor(colDic["palegreen"]), QColor(colDic["green"])]
+            self.set_renderer(layer, color_list, myRasterShader, min, max)
 
-        elev_lst = [QgsColorRampShader.ColorRampItem(valueList[0], QColor(colDic['black'])),
-                     QgsColorRampShader.ColorRampItem(valueList[1], QColor(colDic['grey'])),
-                     QgsColorRampShader.ColorRampItem(valueList[2], QColor(colDic['white']))]
+        # Elevation maps
+        elif style == 2:
+            color_list = [QColor(colDic["black"]), QColor(colDic["grey"]), QColor(colDic["white"])]
+            self.set_renderer(layer, color_list, myRasterShader, min, max)
 
-        time_lst = [QgsColorRampShader.ColorRampItem(valueList[0], QColor(colDic['green'])),
-                     QgsColorRampShader.ColorRampItem(valueList[1], QColor(colDic['yellow'])),
-                     QgsColorRampShader.ColorRampItem(valueList[2], QColor(colDic['red']))]
+        # Time maps
+        elif style == 3:
+            color_list = [QColor(colDic["green"]), QColor(colDic["yellow"]), QColor(colDic["red"])]
+            self.set_renderer(layer, color_list, myRasterShader, min, max)
 
-        q_lst = [QgsColorRampShader.ColorRampItem(valueList[0], QColor(colDic['white'])),
-                  QgsColorRampShader.ColorRampItem(valueList[1], QColor(colDic['lightblue'])),
-                  QgsColorRampShader.ColorRampItem(valueList[2], QColor(colDic['blue']))]
-
-        style_dict = {
-            0: dep_lst,
-            1: vel_lst,
-            2: elev_lst,
-            3: time_lst,
-            4: q_lst,
-        }
-
-        myRasterShader = QgsRasterShader()
-        myColorRamp = QgsColorRampShader(minimumValue=min, maximumValue=max)
-
-        myColorRamp.setColorRampItemList(style_dict[style])
-        myColorRamp.setColorRampType(QgsColorRampShader.Interpolated)
-        myColorRamp.setClip(True)
-
-        myRasterShader.setRasterShaderFunction(myColorRamp)
-
-        myPseudoRenderer = QgsSingleBandPseudoColorRenderer(layer.dataProvider(),
-                                                            layer.type(),
-                                                            myRasterShader)
-
-        layer.setRenderer(myPseudoRenderer)
+        # Flow maps
+        elif style == 4:
+            color_list = [QColor(colDic["white"]), QColor(colDic["lightblue"]), QColor(colDic["blue"])]
+            self.set_renderer(layer, color_list, myRasterShader, min, max)
 
         layer.triggerRepaint()
-
-
 
     def run(self):
 
@@ -375,26 +357,50 @@ class Rasterizor:
         # output directory
         outputPath = self.dlg.outputFile.filePath()
 
-        if filePath == "" or outputPath == "":
+        if filePath == "":
             QMessageBox.information(None, "Error", "Please, select a file, output directory and/or cell size!")
+            return
 
-        else:
+        if outputPath == "":
+            outputPath = QgsProcessingUtils.tempFolder()
 
-            # Read the file and adjust the slashes
-            fn = filePath.replace(os.sep, '/')
-            layername = self.dlg.lineEdit_layerName.text()
-            # create the output file
-            raster_file = outputPath + "/" + layername + ".tif"
-            # Verify if the layer exists, if so delete it
-            # MAYBE ADD A MSG BOX INFORMING THAT THE FILE EXISTS OR WHATEVER
-            for layer in QgsProject.instance().mapLayers().values():
-                if layer.name() == self.dlg.lineEdit_layerName.text():
-                    QgsProject.instance().removeMapLayers([layer.id()])
-                    # Run the function
-            self.lidar_to_raster(fn, raster_file)
-            # Add to map
-            self.iface.addRasterLayer(raster_file, layername)
-            active_layer = iface.activeLayer()
-            style = self.dlg.style_cbo.currentIndex()
-            self.setStyle(active_layer, style)
-            self.dlg.plainTextEdit.appendPlainText("Process complete!")
+        # Read the file and adjust the slashes
+        fn = filePath.replace(os.sep, '/')
+        layername = self.dlg.lineEdit_layerName.text()
+        # create the output file
+        raster_file = outputPath + "/" + layername + ".tif"
+        # Verify if the layer exists, if so delete it
+
+        for layer in QgsProject.instance().mapLayers().values():
+            if layer.name() == self.dlg.lineEdit_layerName.text():
+                QgsProject.instance().removeMapLayers([layer.id()])
+                # Run the function
+        self.lidar_to_raster(fn, raster_file)
+        # Add to map
+        self.iface.addRasterLayer(raster_file, layername)
+        active_layer = iface.activeLayer()
+        style = self.dlg.style_cbo.currentIndex()
+        self.setStyle(active_layer, style)
+        self.dlg.plainTextEdit.appendPlainText("Process complete!")
+
+    def set_renderer(self, layer, color_list, raster_shader, min, max):
+        """
+        Function to set the render to layer
+        """""
+        # Three colors -> all layers
+        color_ramp = QgsGradientColorRamp(
+            QColor(color_list[0]),
+            QColor(color_list[2]),
+            discrete=False, stops=[
+                QgsGradientStop(0.5, QColor(color_list[1])),
+            ])
+
+        myPseudoRenderer = QgsSingleBandPseudoColorRenderer(
+            layer.dataProvider(), layer.type(), raster_shader
+        )
+
+        myPseudoRenderer.setClassificationMin(min)
+        myPseudoRenderer.setClassificationMax(max)
+        myPseudoRenderer.createShader(color_ramp)
+
+        layer.setRenderer(myPseudoRenderer)
