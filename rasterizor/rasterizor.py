@@ -351,8 +351,29 @@ class Rasterizor:
 
         # Difference map
         elif style == 5:
-            color_list = [QColor(colDic["blue"]), QColor(colDic["green"]), QColor(colDic["red"])]
-            self.set_renderer(layer, color_list, myRasterShader, stats.minimumValue, max)
+
+            min = stats.minimumValue
+
+            range_distance = max - min
+            zero_position = 0 - min
+            normalized_position = zero_position / range_distance
+
+            color_ramp = QgsGradientColorRamp(
+                QColor(QColor(colDic["blue"])),
+                QColor(QColor(colDic["red"])),
+                discrete=False, stops=[
+                    QgsGradientStop(normalized_position, QColor(colDic["green"])),
+                ])
+
+            myPseudoRenderer = QgsSingleBandPseudoColorRenderer(
+                layer.dataProvider(), layer.type(), myRasterShader
+            )
+
+            myPseudoRenderer.setClassificationMin(min)
+            myPseudoRenderer.setClassificationMax(max)
+            myPseudoRenderer.createShader(color_ramp)
+
+            layer.setRenderer(myPseudoRenderer)
 
         layer.triggerRepaint()
 
