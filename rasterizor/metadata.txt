@@ -33,7 +33,7 @@ changelog=0.3
 # Tags are comma separated with spaces allowed
 tags=python, rasterize, FLO-2D output, .OUT files
 
-homepage=https://flo-2d.com
+homepage=https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/wiki
 category=Plugins
 icon=icon.png
 # experimental flag
