@@ -266,10 +266,9 @@ class Rasterizor:
         # Convert the list of values to an array.
         raster_data = np.full((num_rows, num_cols), -9999, dtype=np.float32)
         for point in values:
-            if point[2] != 0:
-                col = int((point[0] - min_x) / self.cellSize)
-                row = int((max_y - point[1]) / self.cellSize)
-                raster_data[row, col] = point[2]
+            col = int((point[0] - min_x) / self.cellSize)
+            row = int((max_y - point[1]) / self.cellSize)
+            raster_data[row, col] = point[2]
 
         # Initialize the raster
         driver = gdal.GetDriverByName("GTiff")
@@ -287,7 +286,7 @@ class Rasterizor:
         raster.SetProjection(self.crs.toWkt())
 
         band = raster.GetRasterBand(1)
-        band.SetNoDataValue(-9999)  # Set a no-data value if needed
+        band.SetNoDataValue(nodata_value)  # Set a no-data value if needed
         band.WriteArray(raster_data)
 
         raster.FlushCache()
@@ -487,7 +486,7 @@ class Rasterizor:
 
         myPseudoRenderer.setClassificationMin(min)
         myPseudoRenderer.setClassificationMax(max)
-        myPseudoRenderer.createShader(color_ramp)
+        myPseudoRenderer.createShader(color_ramp, clip=True)
 
         layer.setRenderer(myPseudoRenderer)
 
