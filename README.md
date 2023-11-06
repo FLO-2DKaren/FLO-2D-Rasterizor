@@ -38,4 +38,4 @@ FLO-2D Rasterizor QGIS Repository
 
 ## Bugs
 
-Our issue tracker is at [https://github.com/OpenWaterAnalytics/pyswmm/issues](https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/issues). Please report any bugs that you find.
+Our issue tracker is at [https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/issues](https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/issues). Please report any bugs that you find.
