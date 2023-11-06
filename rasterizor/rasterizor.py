@@ -356,28 +356,6 @@ class Rasterizor:
 
         layer.triggerRepaint()
 
-    def set_renderer(self, layer, color_list, raster_shader, min, max):
-        """
-        Function to set the render to layer
-        """""
-        # Three colors -> all layers
-        color_ramp = QgsGradientColorRamp(
-            QColor(color_list[0]),
-            QColor(color_list[2]),
-            discrete=False, stops=[
-                QgsGradientStop(0.5, QColor(color_list[1])),
-            ])
-
-        myPseudoRenderer = QgsSingleBandPseudoColorRenderer(
-            layer.dataProvider(), layer.type(), raster_shader
-        )
-
-        myPseudoRenderer.setClassificationMin(min)
-        myPseudoRenderer.setClassificationMax(max)
-        myPseudoRenderer.createShader(color_ramp)
-
-        layer.setRenderer(myPseudoRenderer)
-
     def run(self):
 
         # # Create the dialog with elements (after translation) and keep reference
@@ -469,3 +447,26 @@ class Rasterizor:
         )["OUTPUT"]
 
         return QgsRasterLayer(difference, layer_name)
+
+    def set_renderer(self, layer, color_list, raster_shader, min, max):
+        """
+        Function to set the render to layer
+        """""
+        # Three colors -> all layers
+        color_ramp = QgsGradientColorRamp(
+            QColor(color_list[0]),
+            QColor(color_list[2]),
+            discrete=False, stops=[
+                QgsGradientStop(0.5, QColor(color_list[1])),
+            ])
+
+        myPseudoRenderer = QgsSingleBandPseudoColorRenderer(
+            layer.dataProvider(), layer.type(), raster_shader
+        )
+
+        myPseudoRenderer.setClassificationMin(min)
+        myPseudoRenderer.setClassificationMax(max)
+        myPseudoRenderer.createShader(color_ramp)
+
+        layer.setRenderer(myPseudoRenderer)
+
