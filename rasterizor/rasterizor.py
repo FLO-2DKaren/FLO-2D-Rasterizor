@@ -46,6 +46,8 @@ from .rasterizor_dialog import RasterizorDialog
 import os.path
 from osgeo import gdal
 
+import processing
+
 class Rasterizor:
     """QGIS Plugin Implementation."""
 
@@ -88,14 +90,15 @@ class Rasterizor:
         # Set the CRS to the widget
         self.crs = QgsCoordinateReferenceSystem(QgsProject.instance().crs().authid())
         self.dlg.crsselector.setCrs(self.crs)
+        self.dlg.crsselector_2.setCrs(self.crs)
 
         # Run button
         self.dlg.runButton.clicked.connect(self.run)
-
-        # self.dlg.layerName.filled(self.l
+        self.dlg.runButton_2.clicked.connect(self.run_comparison)
 
         # Close button
         self.dlg.cancelButton.clicked.connect(self.closeDialog)
+        self.dlg.cancelButton_2.clicked.connect(self.closeDialog)
 
         # noinspection PyMethodMayBeStatic
 
@@ -216,6 +219,7 @@ class Rasterizor:
         """Shows the dialog"""
         self.crs = QgsCoordinateReferenceSystem(QgsProject.instance().crs().authid())
         self.dlg.crsselector.setCrs(self.crs)
+        self.dlg.crsselector_2.setCrs(self.crs)
         self.dlg.show()
 
     # Adapted function from dlg_sampling_xyz_.py
@@ -345,6 +349,11 @@ class Rasterizor:
             color_list = [QColor(colDic["white"]), QColor(colDic["lightblue"]), QColor(colDic["blue"])]
             self.set_renderer(layer, color_list, myRasterShader, min, max)
 
+        # Difference map
+        elif style == 5:
+            color_list = [QColor(colDic["blue"]), QColor(colDic["green"]), QColor(colDic["red"])]
+            self.set_renderer(layer, color_list, myRasterShader, stats.minimumValue, max)
+
         layer.triggerRepaint()
 
     def run(self):
@@ -383,6 +392,62 @@ class Rasterizor:
         self.setStyle(active_layer, style)
         self.dlg.plainTextEdit.appendPlainText("Process complete!")
 
+    def run_comparison(self):
+        """
+        Function to run the comparison between two rasters
+        """
+        raster_1 = self.dlg.readFile_1.currentLayer()
+        raster_2 = self.dlg.readFile_2.currentLayer()
+
+        outputPath = self.dlg.outputFile_2.filePath()
+
+        layername = self.dlg.lineEdit_layerName_2.text()
+
+        if raster_1 == "" or raster_2 == "" or layername == "":
+            QMessageBox.information(None, "Error", "Please, select two valid rasters and layer name!")
+            return
+
+        if outputPath == "":
+            outputPath = QgsProcessingUtils.tempFolder()
+
+        # create the output file
+        raster_file = outputPath + "/" + layername + ".tif"
+        # Verify if the layer exists, if so delete it
+        for layer in QgsProject.instance().mapLayers().values():
+            if layer.name() == self.dlg.lineEdit_layerName_2.text():
+                QgsProject.instance().removeMapLayers([layer.id()])
+
+        # Run the function
+        # raster_difference = self.raster_comparison(raster_1, raster_2)
+        raster_difference = self.raster_comparison(raster_1, raster_2, raster_file, layername)
+        # Add to map
+        QgsProject.instance().addMapLayer(raster_difference)
+        active_layer = iface.activeLayer()
+        self.setStyle(active_layer, 5)
+        self.dlg.plainTextEdit_2.appendPlainText("Process complete!")
+
+    def raster_comparison(self, raster_1, raster_2, raster_file, layer_name):
+        """
+        Function to compare two rasters and return a difference raster layer
+        """
+
+        expression = f'"{raster_1.name()}@1" - "{raster_2.name()}@1"'
+        QgsMessageLog.logMessage(expression)
+
+        difference = processing.run(
+            "qgis:rastercalculator",
+            {
+                "EXPRESSION": expression,
+                "LAYERS": [raster_1],
+                "CELLSIZE": 0,
+                "EXTENT": None,
+                "CRS": self.crs,
+                "OUTPUT": raster_file,
+            },
+        )["OUTPUT"]
+
+        return QgsRasterLayer(difference, layer_name)
+
     def set_renderer(self, layer, color_list, raster_shader, min, max):
         """
         Function to set the render to layer
@@ -404,3 +469,4 @@ class Rasterizor:
         myPseudoRenderer.createShader(color_ramp)
 
         layer.setRenderer(myPseudoRenderer)
+
