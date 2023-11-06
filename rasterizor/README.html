@@ -1,42 +1,31 @@
 <html>
-<body>
-<h3>Plugin Builder Results</h3>
-
-Congratulations! You just built a plugin for QGIS!<br/><br />
-
-<div id='help' style='font-size:.9em;'>
-Your plugin <b>FLO-2D Rasterizor</b> was created in:<br>
-&nbsp;&nbsp;<b>C:/Users/FLO-2D Laptop/PycharmProjects/FLO-2D-Rasterizor\rasterizor</b>
-<p>
-Your QGIS plugin directory is located at:<br>
-&nbsp;&nbsp;<b>C:/Users/FLO-2D Laptop/AppData/Roaming/QGIS/QGIS3/profiles/default/python/plugins</b>
-<p>
-<h3>What's Next</h3>
-<ol>
-    <li>If resources.py is not present in your plugin directory, compile the resources file using pyrcc5 (simply use <b>pb_tool</b> or <b>make</b> if you have automake)
-    <li>Optionally, test the generated sources using <b>make test</b> (or run tests from your IDE)
-    <li>Copy the entire directory containing your new plugin to the QGIS plugin directory (see Notes below)
-    <li>Test the plugin by enabling it in the QGIS plugin manager
-    <li>Customize it by editing the implementation file <b>rasterizor.py</b>
-    <li>Create your own custom icon, replacing the default <b>icon.png</b>
-    <li>Modify your user interface by opening <b>rasterizor_dialog_base.ui</b> in Qt Designer
-</ol>
-Notes:
+<h1 id="flo-2d-rasterizor">FLO-2D-Rasterizor</h1>
+<p><img src="https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/assets/39889306/05a2477e-3cca-4240-bb32-0cd4e721596c" alt="F2D 400 Transparent"></p>
+<p>Rasterizor is a QGIS plugin used to rasterize FLO-2D output data. It is a quick mapping tool for FLO-2D output files. The files should have a standard format with 4 columns ge, x, y, n. These are grid element number, x coordinate, y coordinate, and n is the mapped value. It could be water surface elevation, depth, velocity or time to depth. A brief list of files that can be used are:</p>
 <ul>
-    <li>You can use <b>pb_tool</b> to compile, deploy, and manage your plugin. Tweak the <i>pb_tool.cfg</i> file included with your plugin as you add files. Install <b>pb_tool</b> using 
-        <i>pip</i> or <i>easy_install</i>. See <b>http://loc8.cc/pb_tool</b> for more information.
-    <li>You can also use the <b>Makefile</b> to compile and deploy when you
-        make changes. This requires GNU make (gmake). The Makefile is ready to use, however you 
-        will have to edit it to add additional Python source files, dialogs, and translations.
+<li>DEPFP.OUT</li>
+<li>DEPTH.OUT</li>
+<li>VELFP.OUT</li>
+<li>TIMEONEFT.OUT</li>
+<li>MAXWSELEV.OUT</li>
+<li>Many others</li>
 </ul>
-</div>
-<div style='font-size:.9em;'>
-<p>
-For information on writing PyQGIS code, see <b>http://loc8.cc/pyqgis_resources</b> for a list of resources.
-</p>
-</div>
-<p>
-&copy;2011-2019 GeoApt LLC - geoapt.com 
-</p>
-</body>
+<p>All FLO-2D output files are listed and described in the Chapter 5 of the Data Input Manual. It is installed on your computer with the software.</p>
+<p>For more information on Rasterizor, check the <a href="https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/wiki">FLO-2D-Rasterizor Wiki</a>.</p>
+<h2 id="features">Features</h2>
+<p>Quick map FLO-2D output files</p>
+<p><img src="https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/assets/39889306/21fca9e7-8b6c-44f1-91a1-76aad1b868d6" alt="image"></p>
+<p>Find differences between rasters</p>
+<p><img src="https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/assets/39889306/e9310aa5-cc14-4222-ac2f-7f9fc1bc0a6c" alt="image"></p>
+<h2 id="versions">Versions</h2>
+<ul>
+<li>0.3 Under development </li>
+<li>0.2 Latest Release</li>
+<li>0.1 First release</li>
+</ul>
+<h2 id="download">Download</h2>
+<p>FLO-2D Rasterizor QGIS Repository</p>
+<p><img src="https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/assets/39889306/d76203ce-dad5-4e0b-a057-4b2c9dbf94c3" alt="image"></p>
+<h2 id="bugs">Bugs</h2>
+<p>Our issue tracker is at <a href="https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/issues">https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/issues</a>. Please report any bugs that you find.</p>
 </html>
