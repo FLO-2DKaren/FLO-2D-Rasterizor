@@ -224,7 +224,10 @@ class Rasterizor:
 
     # Adapted function from dlg_sampling_xyz_.py
     def lidar_to_raster(self, lidar_file, raster_file, nodata_value=-9999):
-
+        """
+        Function to sample an ascii text file for x y z data into a numpy array and 
+        build a raster.
+        """
         # Open the file and read the lines
         self.dlg.plainTextEdit.appendPlainText("Reading data...")
 
