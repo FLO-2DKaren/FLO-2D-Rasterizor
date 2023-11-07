@@ -23,6 +23,7 @@
 """
 import os
 import numpy as np
+from qgis._gui import QgsProjectionSelectionWidget
 from qgis.core import *
 from qgis.utils import iface
 from qgis.PyQt.QtCore import Qt, QSettings, QTranslator, QCoreApplication
@@ -37,6 +38,7 @@ from qgis.PyQt.QtWidgets import (
     QDialogButtonBox,
     QMessageBox
 )
+
 from qgis._core import (QgsGradientColorRamp, QgsGradientStop)
 # from rast_functions import outTable
 # Initialize Qt resources from file resources.py
@@ -89,8 +91,10 @@ class Rasterizor:
 
         # Set the CRS to the widget
         self.crs = QgsCoordinateReferenceSystem(QgsProject.instance().crs().authid())
-        self.dlg.crsselector.setCrs(self.crs)
-        self.dlg.crsselector_2.setCrs(self.crs)
+        self.projectionSelector = QgsProjectionSelectionWidget()
+        # self.dlg.crsselector.setCrs(self.crs)
+        # self.dlg.crsselector_2.setCrs(self.crs)
+        # self.projectionSelector.selectCrs()
 
         # Run button
         self.dlg.runButton.clicked.connect(self.run)
@@ -218,9 +222,55 @@ class Rasterizor:
     def open(self):
         """Shows the dialog"""
         self.crs = QgsCoordinateReferenceSystem(QgsProject.instance().crs().authid())
-        self.dlg.crsselector.setCrs(self.crs)
-        self.dlg.crsselector_2.setCrs(self.crs)
-        self.dlg.show()
+        while True:
+            # Check if it is metric
+            if not self.crs.isGeographic():
+                self.dlg.crsselector.setCrs(self.crs)
+                self.dlg.crsselector_2.setCrs(self.crs)
+                self.dlg.show()
+                break  # Exit the loop
+            else:
+                # Open the CRS selector
+                self.projectionSelector.selectCrs()
+
+                # Check if the user selected a projected CRS
+                if not self.projectionSelector.crs().isGeographic():
+                    QgsProject.instance().setCrs(self.projectionSelector.crs())
+                    self.crs = self.projectionSelector.crs()
+                    self.dlg.crsselector.setCrs(self.crs)
+                    self.dlg.crsselector_2.setCrs(self.crs)
+                    self.dlg.show()
+                    break  # Exit the loop
+                else:
+                    # Show a warning message
+                    QMessageBox.warning(
+                        self.dlg,
+                        "CRS error",
+                        "Select a Projected Coordinate Reference System!"
+                    )
+
+        # # Check if it is metric
+        # if not self.crs.isGeographic():
+        #     self.dlg.crsselector.setCrs(self.crs)
+        #     self.dlg.crsselector_2.setCrs(self.crs)
+        #     self.dlg.show()
+        # else:
+        #     # Open the CRS selector
+        #     self.projectionSelector.selectCrs()
+        #     # Check again if the user selected a geographic crs
+        #     if self.projectionSelector.crs().isGeographic():
+        #         QMessageBox.warning(
+        #             self.dlg,
+        #             "CRS error",
+        #             "Select a Projected Coordinate Reference System!"
+        #         )
+        #     else:
+        #         QgsProject.instance().setCrs(self.projectionSelector.crs())
+        #         self.crs = self.projectionSelector.crs()
+        #         self.dlg.crsselector.setCrs(self.crs)
+        #         self.dlg.crsselector_2.setCrs(self.crs)
+        #         self.dlg.show()
+
 
     # Adapted function from dlg_sampling_xyz_.py
     def lidar_to_raster(self, lidar_file, raster_file, nodata_value=-9999):

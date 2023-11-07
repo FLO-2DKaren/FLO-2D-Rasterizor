@@ -16,7 +16,9 @@ repository=https://github.com/FLO-2DKaren/FLO-2D-Rasterizor
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=0.3
+changelog=0.4
+    - Added a CRS selector
+ 0.3
     - Added the difference between rasters
     - Updated style code
  0.2
