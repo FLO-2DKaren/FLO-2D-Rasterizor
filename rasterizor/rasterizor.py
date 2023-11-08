@@ -100,7 +100,8 @@ class Rasterizor:
         self.dlg.cancelButton.clicked.connect(self.closeDialog)
         self.dlg.cancelButton_2.clicked.connect(self.closeDialog)
 
-        # noinspection PyMethodMayBeStatic
+        self.dlg.readFile_1.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.dlg.readFile_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
