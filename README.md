@@ -26,7 +26,7 @@ Find differences between rasters
 
 ## Versions
 
-- 0.3 Under development 
+- 0.3 Latest Release
 - 0.2 Latest Release
 - 0.1 First release
 
