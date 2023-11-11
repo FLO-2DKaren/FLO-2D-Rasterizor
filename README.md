@@ -1,5 +1,4 @@
 # FLO-2D-Rasterizor
-![F2D 400 Transparent](https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/assets/39889306/05a2477e-3cca-4240-bb32-0cd4e721596c)
 
 Rasterizor is a QGIS plugin used to rasterize FLO-2D output data. It is a quick mapping tool for FLO-2D output files. The files should have a standard format with 4 columns ge, x, y, n. These are grid element number, x coordinate, y coordinate, and n is the mapped value. It could be water surface elevation, depth, velocity or time to depth. A brief list of files that can be used are:
 
