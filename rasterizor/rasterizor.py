@@ -356,17 +356,29 @@ class Rasterizor:
         elif style == 5:
 
             min = stats.minimumValue
+            max = stats.maximumValue
 
             range_distance = max - min
             zero_position = 0 - min
             normalized_position = zero_position / range_distance
 
+            neg1 = (-0.1 - min) / range_distance
+            neg5 = (-0.05 - min) / range_distance
+            pos5 = (0.05 - min) / range_distance
+            pos1 = (0.1 - min) / range_distance
+
             color_ramp = QgsGradientColorRamp(
-                QColor(QColor(colDic["blue"])),
-                QColor(QColor(colDic["red"])),
-                discrete=False, stops=[
-                    QgsGradientStop(normalized_position, QColor(colDic["green"])),
-                ])
+                QColor('#08306b'),
+                QColor('#FF0000'),
+                discrete=False,
+                stops=[
+                    QgsGradientStop(neg1, QColor(158, 202, 225)),
+                    QgsGradientStop(neg5, QColor(158, 202, 225, 0)),
+                    QgsGradientStop(normalized_position, QColor(65, 171, 93, 0)),
+                    QgsGradientStop(pos5, QColor(255, 127, 0, 0)),
+                    QgsGradientStop(pos1, QColor(255, 127, 0)),
+                ],
+            )
 
             myPseudoRenderer = QgsSingleBandPseudoColorRenderer(
                 layer.dataProvider(), layer.type(), myRasterShader
