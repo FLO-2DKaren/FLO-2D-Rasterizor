@@ -1,5 +1,4 @@
 # FLO-2D-Rasterizor
-![F2D 400 Transparent](https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/assets/39889306/05a2477e-3cca-4240-bb32-0cd4e721596c)
 
 Rasterizor is a QGIS plugin used to rasterize FLO-2D output data. It is a quick mapping tool for FLO-2D output files. The files should have a standard format with 4 columns ge, x, y, n. These are grid element number, x coordinate, y coordinate, and n is the mapped value. It could be water surface elevation, depth, velocity or time to depth. A brief list of files that can be used are:
 
@@ -26,7 +25,7 @@ Find differences between rasters
 
 ## Versions
 
-- 0.3 Under development 
+- 0.3 Latest Release
 - 0.2 Latest Release
 - 0.1 First release
 
@@ -39,3 +38,18 @@ FLO-2D Rasterizor QGIS Repository
 ## Bugs
 
 Our issue tracker is at [https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/issues](https://github.com/FLO-2DKaren/FLO-2D-Rasterizor/issues). Please report any bugs that you find.
+
+## FLO-2D Rasterizor license
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 2 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.

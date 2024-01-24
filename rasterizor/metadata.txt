@@ -16,11 +16,15 @@ repository=https://github.com/FLO-2DKaren/FLO-2D-Rasterizor
 
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
-changelog=0.4
+changelog=
+ 0.3.1
+    - Added a new symbology for comparison
+    - Allowed only rasters layers for comparison
     - Added a CRS selector
  0.3
     - Added the difference between rasters
     - Updated style code
+    - Simplified the rasterizor folder
  0.2
     - Replace rasterio with GDAL
     - Pixel size calculated automatically

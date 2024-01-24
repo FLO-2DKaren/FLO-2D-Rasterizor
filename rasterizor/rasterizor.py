@@ -104,7 +104,8 @@ class Rasterizor:
         self.dlg.cancelButton.clicked.connect(self.closeDialog)
         self.dlg.cancelButton_2.clicked.connect(self.closeDialog)
 
-        # noinspection PyMethodMayBeStatic
+        self.dlg.readFile_1.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.dlg.readFile_2.setFilters(QgsMapLayerProxyModel.RasterLayer)
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -274,7 +275,10 @@ class Rasterizor:
 
     # Adapted function from dlg_sampling_xyz_.py
     def lidar_to_raster(self, lidar_file, raster_file, nodata_value=-9999):
-
+        """
+        Function to sample an ascii text file for x y z data into a numpy array and 
+        build a raster.
+        """
         # Open the file and read the lines
         self.dlg.plainTextEdit.appendPlainText("Reading data...")
 
@@ -402,17 +406,29 @@ class Rasterizor:
         elif style == 5:
 
             min = stats.minimumValue
+            max = stats.maximumValue
 
             range_distance = max - min
             zero_position = 0 - min
             normalized_position = zero_position / range_distance
 
+            neg1 = (-0.1 - min) / range_distance
+            neg5 = (-0.05 - min) / range_distance
+            pos5 = (0.05 - min) / range_distance
+            pos1 = (0.1 - min) / range_distance
+
             color_ramp = QgsGradientColorRamp(
-                QColor(QColor(colDic["blue"])),
-                QColor(QColor(colDic["red"])),
-                discrete=False, stops=[
-                    QgsGradientStop(normalized_position, QColor(colDic["green"])),
-                ])
+                QColor('#08306b'),
+                QColor('#FF0000'),
+                discrete=False,
+                stops=[
+                    QgsGradientStop(neg1, QColor(158, 202, 225)),
+                    QgsGradientStop(neg5, QColor(158, 202, 225, 0)),
+                    QgsGradientStop(normalized_position, QColor(65, 171, 93, 0)),
+                    QgsGradientStop(pos5, QColor(255, 127, 0, 0)),
+                    QgsGradientStop(pos1, QColor(255, 127, 0)),
+                ],
+            )
 
             myPseudoRenderer = QgsSingleBandPseudoColorRenderer(
                 layer.dataProvider(), layer.type(), myRasterShader
