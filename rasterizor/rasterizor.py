@@ -300,14 +300,17 @@ class Rasterizor:
                     if len(cellSize_data) < 2:
                         cellSize_data.append((x, y))
 
-            # Calculate the differences in X and Y coordinates
-        dx = cellSize_data[1][0] - cellSize_data[0][0]
-        dy = cellSize_data[1][1] - cellSize_data[0][1]
+        # Calculate the differences in X and Y coordinates
+        dx = abs(cellSize_data[1][0] - cellSize_data[0][0])
+        dy = abs(cellSize_data[1][1] - cellSize_data[0][1])
 
-        if dx != 0:
-            self.cellSize = int(abs(dx))
-        if dy != 0:
-            self.cellSize = int(abs(dy))
+        # If the coordinate difference is equal 0, assign a huge number
+        if dx == 0:
+            dx = 9999
+        if dy == 0:
+            dy = 9999
+
+        self.cellSize = min(dx, dy)
 
         # Get the extent and number of rows and columns
         min_x = min(point[0] for point in values)
