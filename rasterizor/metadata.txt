@@ -2,7 +2,7 @@
 name=FLO-2D Rasterizor
 qgisMinimumVersion=3.0
 description=A plugin to rasterize general FLO-2D output files.
-version=0.3
+version=0.3.2
 author=Karen OBrien, Robson Leo Pachaly
 email=contact@flo-2d.com
 
@@ -17,6 +17,8 @@ repository=https://github.com/FLO-2DKaren/FLO-2D-Rasterizor
 hasProcessingProvider=no
 # Uncomment the following line and add your changelog:
 changelog=
+ 0.3.2
+    - Fixed the grid size calculation
  0.3.1
     - Added a new symbology for comparison
     - Allowed only rasters layers for comparison
